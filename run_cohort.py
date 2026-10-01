@@ -79,11 +79,17 @@ def main() -> int:
     cli = svr_dir / "svr_cli.py"
     if not cli.is_file():
         raise FileNotFoundError(f"svr_cli.py not found: {cli}")
-    python = args.python.resolve() if args.python else (svr_dir / ".venv/bin/python")
+    # A fresh Git clone omits ignored weights and may not contain this folder.
+    # The CLI's existing first-run checkpoint downloader writes into it.
+    (svr_dir / "standalone_inlined/checkpoints").mkdir(parents=True, exist_ok=True)
+    # Keep the venv entry-point path lexical: resolving its symlink to the
+    # system Python bypasses the venv's site-packages.
+    python = args.python.expanduser().absolute() if args.python else (svr_dir / ".venv/bin/python")
     if not python.is_file():
         python = Path(sys.executable)
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=True)
+    (out / "report").mkdir(parents=True, exist_ok=True)
     results_path = out / "results.csv"
     rows: list[dict] = []
 
@@ -127,7 +133,7 @@ def main() -> int:
 
         reference_screenshot_rel = None
         reference = case.get("reference")
-        if reference:
+        if status in {"completed", "reused"} and reference:
             reference_path = Path(reference)
             if reference_path.is_file():
                 reference_screenshot = out / "report" / f"{name}_reference.png"
