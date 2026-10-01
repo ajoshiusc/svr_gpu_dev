@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+results/
+cohort_manifest*.json
+*.nii
+*.nii.gz
+*.npy
+*.npz
+*.pt
+*.pth
+*.log
